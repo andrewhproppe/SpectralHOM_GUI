@@ -16,11 +16,11 @@ def fit_function(x, amp1, cen1, wid1, amp2, cen2):
 
 root = 'G:\Shared drives\JCEP Lab\Projects\Spectral HOM\g2s'
 fnames = filedialog.askopenfilenames(initialdir=root)
-colors = sns.color_palette("icefire", 6)
+colors = sns.color_palette("tab10", 6)
 # labels = ['signal path', 'idler path']
 labels = ['1', '2', '3', '4', '5', '6']
 distances = [0, 5, 10, 15, 20, 25]
-fit_peaks = True
+fit_peaks = False
 initial_guess = [1, -176, 10, 1, 114]
 peak_diffs = []
 
@@ -38,9 +38,17 @@ for i, fname in enumerate(fnames):
         peak_diffs.append(peak_diff)
         plt.plot(t, fit, color=colors[i])
     t_max.append(t[np.where(g2==1)])
-    plt.plot(t, g2, label=labels[i], color=colors[i])
+    label = fname.split('/g2s/')[-1]
+    plt.plot(
+        t,
+        g2,
+        # label=labels[i],
+        label=label,
+        color=colors[i]
+    )
 
-
+plt.legend()
+plt.tight_layout()
 # plt.figure(figsize=(4, 2.5), dpi=150)
 # plt.plot(steps, ch1/chsum, marker='s', ms=3, label='ch1')
 # plt.plot(steps, ch2/chsum, marker='s', ms=3, label='ch2')

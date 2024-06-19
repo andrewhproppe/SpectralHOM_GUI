@@ -562,6 +562,8 @@ class MainWindow(QtWidgets.QMainWindow):
             t = self.counter.getIndex()/1e12
             data = self.counter.getData()/interval
 
+            data[2, :] *= self.coinc_gain.value()
+
             self.chart_counts_graph.plot(
                 t,
                 data,

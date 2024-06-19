@@ -1,4 +1,4 @@
-import numpy
+import numpy as np
 import seaborn as sns
 
 from fig_utils import dress_fig

@@ -57,30 +57,7 @@ class MainWindow(QtWidgets.QMainWindow):
         # stage_name = '27601378' #[x for x, y in enumerate(self.devices) if y[1] == '27255970']
         self.stage_name = '27601378' #[x for x, y in enumerate(self.devices) if y[1] == '27255970']
         self.stage_scale = 'Z825'
-        #
-        # try:
-        #     self.s = Thorlabs.KinesisMotor(
-        #         self.stage_name.text(),
-        #         self.stage_scale.text()
-        #     )
-        # except Exception as e:
-        #     Thorlabs.KinesisMotor(stage_name, stage_scale).close()
-        #     self.s = Thorlabs.KinesisMotor(stage_name, stage_scale)
-        #     print(e)
-        #
-        # self.stageConnect_led.setChecked(self.s.is_opened())
-        # # self.stageConnected.setText(str(self.s.is_opened()))
-        # self.scale = 1000
-        # self.stage_error = ''
-        #
-        # self.start_time = time.time()
-        # self.pos_thread = Thread(target=self.update_stage_pos)
-        # self.pos_thread.daemon = True
-        # self.pos_thread.start()
-        #
-        # self.update_velo_params = False
-        # self.queue_stage_stop = False
-        # self.queue_stage_home = False
+        self.stage = None
 
         self.hom_scan_range.valueChanged.connect(self.set_hom_relative_range)
         self.ref_position_selection.buttonClicked.connect(self.update_reference_positions)
@@ -159,6 +136,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.fileWriter_btn.clicked.connect(self.start_file_writer_thread)
         self.stage_scan_start_btn.clicked.connect(self.start_stage_scan_thread)
         self.hom_scan_start_btn.clicked.connect(self.start_hom_scan_thread)
+        self.hom_scan_continuous_start_btn.clicked.connect(self.start_hom_scan_continuous_thread)
         self.tpx_scan_start_btn.clicked.connect(self.start_tpx_scan_thread)
         self.save_g2_btn.clicked.connect(self.save_g2)
 
@@ -323,25 +301,25 @@ class MainWindow(QtWidgets.QMainWindow):
             self.queue_stage_home = False
 
         except Exception as e:
-            Thorlabs.KinesisMotor(self.stage_name, self.stage_scale).close()
-            self.stage = Thorlabs.KinesisMotor(self.stage_name, self.stage_scale)
+            # Thorlabs.KinesisMotor(self.stage_name, self.stage_scale).close()
+            # self.stage = Thorlabs.KinesisMotor(self.stage_name, self.stage_scale)
             print(e)
 
 
     def set_velocity_params(self):
-        # pass
-        if not self.is_moving and self.s.is_opened():
-            try:
-                # self.velocity = float(self.velo_val.text())/self.scale
-                # self.acceleration = float(self.accel_val.text())/self.scale
-                self.velocity = self.velo_val.value()/self.scale
-                self.acceleration = self.accel_val.value()/self.scale
-                self.update_velo_params = True
-                # self.s.setup_velocity(max_velocity=self.velocity, acceleration=self.acceleration)
-                self.stage_error = ''
-            except Exception as e:
-                self.stage_error = e
-                print(e)
+        if self.stage is not None:
+            if not self.is_moving:
+                try:
+                    # self.velocity = float(self.velo_val.text())/self.scale
+                    # self.acceleration = float(self.accel_val.text())/self.scale
+                    self.velocity = self.velo_val.value()/self.scale
+                    self.acceleration = self.accel_val.value()/self.scale
+                    self.update_velo_params = True
+                    # self.s.setup_velocity(max_velocity=self.velocity, acceleration=self.acceleration)
+                    self.stage_error = ''
+                except Exception as e:
+                    self.stage_error = e
+                    print(e)
 
     def move_to(self):
         val = float(self.moveTo_val.text())/self.scale
@@ -562,11 +540,13 @@ class MainWindow(QtWidgets.QMainWindow):
             t = self.counter.getIndex()/1e12
             data = self.counter.getData()/interval
 
-            data[2, :] *= self.coinc_gain.value()
+            plot_data = data.copy()
+            plot_data[2, :] *= self.coinc_gain.value()
+            # data[2, :] *= self.coinc_gain.value()
 
             self.chart_counts_graph.plot(
                 t,
-                data,
+                plot_data,
                 self.all_channels,
             )
 
@@ -891,12 +871,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.hom_scan_thread.start()
 
     def hom_scan(self):
-        # HHHHH
-        try:
-            self.start_int_g2_thread(False)
-            self.intg2start_btn.setChecked(False)
-        except Exception as e:
-            print(e)
 
         if self.hom_range_type.checkedButton().text() == 'Relative':
             start = float(self.hom_scan_start_rel.text())
@@ -904,6 +878,7 @@ class MainWindow(QtWidgets.QMainWindow):
         elif self.hom_range_type.checkedButton().text() == 'Absolute':
             start = self.hom_scan_start.value()
             end   = self.hom_scan_end.value()
+
         nsteps = int(self.hom_scan_nsteps.value())
         acqt = self.hom_scan_acqt.value()
         pause_t = self.hom_scan_pause_t.value()
@@ -926,7 +901,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
         positions = []
         g2_zeros  = []
-        self.correlate(start=True)
         for i, step in enumerate(hom_steps):
             if self.hom_scan_stop_btn.isChecked():
                 self.hom_scan_stop_btn.setChecked(False)
@@ -941,38 +915,22 @@ class MainWindow(QtWidgets.QMainWindow):
 
             # Pause to let stage stabilize
             time.sleep(pause_t)
-            # Reset g2
-            self.g2[0].clear()
+
             # Pause to acquire
             time.sleep(acqt)
+
             # Get data from g2
-            data = np.sum(self.g2[0].getData()) / acqt # coincidences per second
+            # DDDDD
+            data = self.coincidences.value()
+            # data = np.sum(self.g2[0].getData()) / acqt # coincidences per second
 
             if self.subtract_accidentals.isChecked():
                 data = data - self.accidentals.value()
             if self.divide_by_singles.isChecked():
                 data = data / (np.sqrt(self.cps[self.active_channels[0] - 1].value() * self.cps[self.active_channels[1] - 1].value()))
+
             # FFFFF
             g2_zeros.append(data)
-
-            # if self.divide_by_singles.isChecked():
-            #     data = data / (np.sqrt(self.cps[0].value() * self.cps[1].value()))
-            #
-            # if self.hom_take_mean.isChecked():
-            #     zero_idx_low = find_nearest(idxs, self.hom_window_start.value())
-            #     zero_idx_hi  = find_nearest(idxs, self.hom_window_end.value())
-            #     g2_zero = np.sum(data[zero_idx_low:zero_idx_hi])
-            #
-            # elif self.hom_take_max.isChecked():
-            #     g2_zero = data.max()
-            #
-            # background_start_idx = find_nearest(idxs, self.hom_ref_start.value())
-            # background_end_idx = find_nearest(idxs, self.hom_ref_end.value())
-            # background = np.mean(data[background_start_idx:background_end_idx+1])
-            #
-            # g2_zero_norm = g2_zero / background
-            #
-            # g2_zeros.append(g2_zero_norm)
 
             positions.append(self.current_stage_position)
 
@@ -993,9 +951,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.hom_scan_led.setChecked(False)
         self.hom_scan_start_btn.setChecked(False)
 
-        self.correlate(start=False)
-
         return
+
         # if self.fileWriter_btn.isChecked():
         #     self.filewriter = TimeTagger.FileWriter(self.tagger, fname, self.active_channels)
         #     print('FileWriter started')
@@ -1004,6 +961,101 @@ class MainWindow(QtWidgets.QMainWindow):
         #     self.filewriter.stop()
         #     print('FileWriter ended')
         #     self.fileWriter_led.setChecked(self.filewriter.isRunning())
+
+
+    def start_hom_scan_continuous_thread(self):
+        self.hom_scan_continuous_thread = Thread(target=self.hom_scan_continuous)
+        self.hom_scan_continuous_thread.start()
+
+    def hom_scan_continuous(self):
+        if self.hom_range_type.checkedButton().text() == 'Relative':
+            start = float(self.hom_scan_start_rel.text())
+            end   = float(self.hom_scan_end_rel.text())
+        elif self.hom_range_type.checkedButton().text() == 'Absolute':
+            start = self.hom_scan_start.value()
+            end   = self.hom_scan_end.value()
+
+        self.hom_scan_led.setChecked(True)
+        self.velo_val.setValue(1)
+        self.accel_val.setValue(1)
+        while self.update_velo_params == True:
+            print('Waiting for velo params to update..')
+            time.sleep(0.1)
+        print('Velocity set to 1 for moving to starting position')
+
+        time.sleep(0.1)
+        self.stage.move_to(start/self.scale)
+
+        # Wait to move to starting position
+        print('Waiting for starting position..') #, end="\r")
+        while self.current_stage_position != start:
+            time.sleep(0.1)
+
+        print('Arrived at starting position')
+
+        self.velo_val.setValue(self.hom_velo_val.value())
+        self.accel_val.setValue(self.hom_accel_val.value())
+        while self.update_velo_params == True:
+            print('Waiting for velo params to update..')
+            time.sleep(0.1)
+
+        #GGGGG
+
+        print('Velocity set for HOM scan')
+        time.sleep(1)
+
+        positions = []
+        coincs = []
+
+
+            # print(self.current_stage_position)
+            # print('Waiting for starting position..') #, end="\r")
+
+        print('Starting movement to end position')
+        self.stage.move_to(end/self.scale)
+
+        i = 0
+
+        while self.current_stage_position != end:
+            if self.hom_scan_stop_btn.isChecked():
+                self.hom_scan_stop_btn.setChecked(False)
+                break
+
+            # Pause to let stage stabilize
+            time.sleep(float(self.counter_acquisition_t.text()))
+
+            # Get data from g2
+            data = self.coincidences.value()
+            # data = np.sum(self.g2[0].getData()) / acqt # coincidences per second
+
+            if self.subtract_accidentals.isChecked():
+                data = data - self.accidentals.value()
+            if self.divide_by_singles.isChecked():
+                data = data / (np.sqrt(self.cps[self.active_channels[0] - 1].value() * self.cps[self.active_channels[1] - 1].value()))
+
+            coincs.append(data)
+            positions.append(self.current_stage_position)
+
+            if i > 0:
+                self.hom_graph.plot(positions, coincs)
+
+            if self.hom_scan_write_scan_checkBox.isChecked() and i % 10 == 0:
+                # print('Scan saved')
+                # column_names = self.active_channels.astype(str)
+                df = pd.DataFrame(
+                    data=coincs,
+                    index=positions
+                )
+                df.index.name = 'Steps (mm)'
+                save_path = self.get_filepath_hom_scan()
+                df.to_csv(save_path)
+
+            i += 1
+
+        self.hom_scan_led.setChecked(False)
+        self.hom_scan_continuous_start_btn.setChecked(False)
+
+        return
 
     def start_tpx_scan_thread(self):
         self.tpx_scan_thread = Thread(target=self.tpx_scan)

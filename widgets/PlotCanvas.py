@@ -1,7 +1,7 @@
 from PyQt5 import QtWidgets
 from matplotlib import pyplot as plt
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
-
+import numpy as np
 
 class PlotCanvas(FigureCanvas):
     def __init__(self, parent=None, width=4, height=4, dpi=150):
@@ -22,7 +22,7 @@ class PlotCanvas(FigureCanvas):
         for i, d in enumerate(data):
             self.axes.plot(t, d, color=self.colors[i])
 
-        # self.axes.set_ylim(np.min(data) * 0.99, np.max(data) * 1.01)
-        # self.axes.set_xlim(np.min(t) * 0.99, np.max(t) * 1.01)
+        self.axes.set_ylim(np.min(data) * 0.99, np.max(data) * 1.01)
+        self.axes.set_xlim(np.min(t) * 0.99, np.max(t) * 1.01)
         # self.axes.autoscale('y')
         self.draw()

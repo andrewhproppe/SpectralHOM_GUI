@@ -1,5 +1,7 @@
 import sys
 import os
+
+# Requires downloading TimeTagger software from Swabian (https://www.swabianinstruments.com/time-tagger/downloads/)
 import TimeTagger
 import time
 import pyperclip
@@ -7,6 +9,8 @@ import threading
 import pickle
 from fig_utils import *
 from threading import Thread
+
+# Requires downloading Kinesis software from Thorlabs (https://www.thorlabs.com/newgrouppage9.cfm?objectgroup_id=10285)
 from pylablib.devices import Thorlabs
 from PyQt5 import QtWidgets, uic
 from LedIndicatorWidget import *
@@ -147,6 +151,7 @@ class MainWindow(QtWidgets.QMainWindow):
         it was given a handler for. Just need to provide the object attribute you want to record (e.g. self.stage_position)
         and it will automatically load that value next time the program is opened
         """
+
         # Misc
         config.add_handler('root_path', self.rootpath)
         config.add_handler('filename', self.filename)
@@ -179,6 +184,7 @@ class MainWindow(QtWidgets.QMainWindow):
         config.add_handler('time_zero', self.stage_time_zero)
         config.add_handler('intg2_acqt', self.intg2_acqt)
         config.add_handler('intg2_npoints', self.intg2_npoints)
+        config.add_handler("coinc_window", self.coinc_window)
 
         # HOM
         config.add_handler('hom_scan_filename', self.hom_scan_filename)
@@ -988,7 +994,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # Wait to move to starting position
         print('Waiting for starting position..') #, end="\r")
-        while self.current_stage_position != start:
+        while self.current_stage_position.__round__(2) != start.__round__(2):
             time.sleep(0.1)
 
         print('Arrived at starting position')
@@ -1016,7 +1022,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         i = 0
 
-        while self.current_stage_position != end:
+        while self.current_stage_position.__round__(2) != end.__round__(2):
             if self.hom_scan_stop_btn.isChecked():
                 self.hom_scan_stop_btn.setChecked(False)
                 break

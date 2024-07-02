@@ -836,7 +836,7 @@
      <enum>QTabWidget::Triangular</enum>
     </property>
     <property name="currentIndex">
-     <number>2</number>
+     <number>1</number>
     </property>
     <property name="tabsClosable">
      <bool>false</bool>
@@ -6020,7 +6020,7 @@
  <resources/>
  <connections/>
  <buttongroups>
-  <buttongroup name="hom_range_type"/>
   <buttongroup name="ref_position_selection"/>
+  <buttongroup name="hom_range_type"/>
  </buttongroups>
 </ui>

@@ -136,6 +136,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.cps = alphabetical_widget_list(self.cps_box.children())
         self.trigger_levels = alphabetical_widget_list(self.trigger_box.children())
         self.channel_delays = alphabetical_widget_list(self.delay_box.children())
+        self.deadtimes = alphabetical_widget_list(self.deadtime_box.children())
         self.channel_onoff = alphabetical_widget_list(self.ch_box.children())
         self.fileWriter_btn.clicked.connect(self.start_file_writer_thread)
         self.stage_scan_start_btn.clicked.connect(self.start_stage_scan_thread)
@@ -215,9 +216,12 @@ class MainWindow(QtWidgets.QMainWindow):
         for i, ch in enumerate(self.channel_delays):
             config.add_handler('ch{}_delay'.format(i), ch)
 
+        for i, ch in enumerate(self.deadtimes):
+            config.add_handler('ch{}_deadtime'.format(i), ch)
+
         for i, ch in enumerate(self.channel_onoff):
             config.add_handler('ch{}_checkBox'.format(i), ch)
-        #
+
         # for i, ch in enumerate(self.g2_matrix):
         #     config.add_handler('matrix{}_entry'.format(i), ch)
 
@@ -452,6 +456,7 @@ class MainWindow(QtWidgets.QMainWindow):
         for i in range(0, 8):
             self.tagger.setTriggerLevel(channel=i+1, voltage=self.trigger_levels[i].value())
             self.tagger.setInputDelay(channel=i+1, delay=self.channel_delays[i].value())
+            self.tagger.setDeadtime(channel=i+1, deadtime=self.deadtimes[i].value())
 
         self.tagger.setConditionalFilter(
             filtered=[int(self.trigger_ch.value())],
@@ -471,29 +476,6 @@ class MainWindow(QtWidgets.QMainWindow):
         elif not self.chartCounts_btn.isChecked():
             self.chart_counts_stop_flag.set()
             self.chartCounts_led.setChecked(False)
-
-
-        # """
-        # Creates the counter object for getting counts in each channel, then makes thread to continuosly update plot using self.plot_chart_counts()
-        # When the button is unchecked, stops the counter, stops the threat, and deletes the counter object (deleteing the counter object seems to be
-        # the only way to reset the TimeTagger into its ready state)
-        # """
-        # if self.chartCounts_btn.isChecked():
-        #     self.stop_counter_thread = False
-        #     self.counter_thread = Thread(target=self.plot_chart_counts)
-        #     # self.counter_thread.daemon = True
-        #     self.counter_thread.start()
-        #     self.chartCounts_led.setChecked(self.counter.isRunning())
-        #     print('Counter started')
-        #
-        # elif not self.chartCounts_btn.isChecked():
-        #     self.counter.stop()
-        #     self.chartCounts_led.setChecked(self.counter.isRunning())
-        #     self.chart_counts_stop_flag.set()
-        #     self.stop_counter_thread = True
-        #     del self.counter
-        #     # self.reset_tt()
-        #     print('Counter stopped')
 
 
     # Function to stop the thread
@@ -563,92 +545,6 @@ class MainWindow(QtWidgets.QMainWindow):
                 print('Thread terminated.')
                 return
 
-    # def plot_chart_counts(self):
-
-        # """ Used in a thread for continuously updating counts. Thread is broken when Chart Counts is unchecked and
-        #  the self.counter object is deleted """
-        # print('Chart counts thread started..')
-        #
-        # chart_coincidences = True
-        # self.get_active_channels()
-        # ctr_acquisition_t = float(self.counter_acquisition_t.text())
-        # ctr_tmax = float(self.counter_tmax.text())
-        # self.ctr_binwidth = ctr_acquisition_t * 1e12
-        # self.ctr_nbins = ctr_tmax / ctr_acquisition_t
-        #
-        # # singles_channels = self.active_channels
-        # singles_channels = [1, 2]
-        # # groups = list(itertools.combinations(singles_channels, 2))
-        #
-        # if chart_coincidences:
-        #     coincidences_vchannels = TimeTagger.Coincidence(self.tagger, [1, 2], coincidenceWindow=10000)
-        #     channels = [*singles_channels, *coincidences_vchannels.getChannels()]
-        # else:
-        #     channels = [*singles_channels]
-        #
-        # self.all_channels = channels
-        #
-        # self.counter = TimeTagger.Counter(
-        #     tagger=self.tagger,
-        #     channels=self.all_channels,
-        #     binwidth=self.ctr_binwidth,
-        #     n_values=self.ctr_nbins
-        # )
-        #
-        # self.counter.start()
-        #
-        #
-        # ctr = 0
-        # if not self.stop_counter_thread:
-        #     print(ctr)
-        #     ctr += 1
-        #     time.sleep(0.1)
-        #     #
-        #     # try:
-        #     #     if hasattr(self, 'counter'):
-        #     #         interval = float(self.counter_acquisition_t.text())
-        #     #
-        #     #         # Wait for acquistion time to accumulate counts
-        #     #         time.sleep(float(interval))
-        #     #
-        #     #         # Send data to graph to plot
-        #     #         t = self.counter.getIndex()/1e12
-        #     #         data = self.counter.getData()/interval
-        #     #
-        #     #         self.chart_counts_graph.plot(
-        #     #             t,
-        #     #             data,
-        #     #             self.all_channels,
-        #     #         )
-        #     #
-        #     #         # Update the cps indicators
-        #     #         self.update_cps(data)
-        #     #
-        #     #         #
-        #     #         # if self.scaleYAxis_checkBox.isChecked() == True:  # Manually scale y-axis
-        #     #         #     self.yaxis_maxlim_sigfig = self.scaleYAxis_sigfig_val.value()
-        #     #         #     self.yaxislim_maxlim_magnitude = self.scaleYAxis_magnitude_val.value()
-        #     #         #     self.yaxis_maxlim = (self.yaxis_maxlim_sigfig) * 10 ** (self.yaxislim_maxlim_magnitude)
-        #     #         #
-        #     #         #     # self.chart_counts_graph.axes.set_ylim(np.min(data) * 0.99, self.yaxis_maxlim)
-        #     #         # else:  # Auto-scale y-axis
-        #     #         #     # self.chart_counts_graph.axes.set_ylim(np.min(data) * 0.99, np.max(data) * 1.01)
-        #     #         #     pass
-        #     #         #
-        #     #         # ctr += 1
-        #     #
-        #     #     else:
-        #     #         break
-        #     # except Exception as e:
-        #     #     self.TT_error = e
-        #     #     self.ttErrorText.setText(str(self.TT_error))
-        #     #     print(e)
-        #     #     break
-        #
-        # elif self.stop_counter_thread:
-        #     print('Chart counts thread terminated.')
-        #     return
-
 
     def update_cps(self, data):
 
@@ -663,7 +559,7 @@ class MainWindow(QtWidgets.QMainWindow):
             accidentals_channel_2 = self.cps[self.active_channels[1] - 1].value()
             # self.accidentals.setValue((self.cps[0].value()*self.cps[1].value())*self.g2_binwidth.value()*self.g2_nbins.value()*1e-12)
             # self.accidentals.setValue(accidentals_channel_1*accidentals_channel_2*self.g2_binwidth.value()*self.g2_nbins.value()*1e-12)
-            self.accidentals.setValue(accidentals_channel_1*accidentals_channel_2*self.coinc_window.value()*1e-12)
+            self.accidentals.setValue(accidentals_channel_1*accidentals_channel_2*2*self.coinc_window.value()*1e-12)
         else:
             self.accidentals.setValue(42)
 
@@ -679,13 +575,15 @@ class MainWindow(QtWidgets.QMainWindow):
 
         mean_square_singles = np.sqrt(singles1 * singles2)
 
+        self.coincidences.setValue(coincs)
+
         if self.subtract_accidentals.isChecked():
             coincs = coincs - self.accidentals.value()
         if self.divide_by_singles.isChecked():
             # data = data / (np.sqrt(self.cps[0].value() * self.cps[1].value()))
             coincs = 100 * coincs / mean_square_singles
 
-        self.coincidences.setValue(coincs)
+        self.coincidences_corr.setValue(coincs)
 
         if self.divide_by_singles.isChecked():
             self.coin_to_sing.setValue(coincs)
@@ -1242,7 +1140,7 @@ class MainWindow(QtWidgets.QMainWindow):
         while True:
             if not self.stop_intg2_thread:
 
-                self.coincidences_vchannels = TimeTagger.Coincidence(self.tagger, channels=[1, 2], coincidenceWindow=1000, timestamp=TimeTagger.CoincidenceTimestamp.ListedFirst)
+                # self.coincidences_vchannels = TimeTagger.Coincidence(self.tagger, channels=[1, 2], coincidenceWindow=1000, timestamp=TimeTagger.CoincidenceTimestamp.ListedFirst)
 
                 # Clear the g2 after it's collected a many coincidences
                 if np.sum(self.g2[0].getData()) > 1e7:

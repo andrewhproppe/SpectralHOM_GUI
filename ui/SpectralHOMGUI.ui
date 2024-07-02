@@ -836,7 +836,7 @@
      <enum>QTabWidget::Triangular</enum>
     </property>
     <property name="currentIndex">
-     <number>1</number>
+     <number>0</number>
     </property>
     <property name="tabsClosable">
      <bool>false</bool>
@@ -5682,7 +5682,7 @@
     <property name="geometry">
      <rect>
       <x>1180</x>
-      <y>700</y>
+      <y>720</y>
       <width>101</width>
       <height>22</height>
      </rect>
@@ -5724,7 +5724,7 @@
     <property name="geometry">
      <rect>
       <x>1080</x>
-      <y>700</y>
+      <y>720</y>
       <width>101</width>
       <height>16</height>
      </rect>
@@ -5994,6 +5994,61 @@
     </property>
     <property name="text">
      <string>Coinc. gain</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_34">
+    <property name="geometry">
+     <rect>
+      <x>1070</x>
+      <y>700</y>
+      <width>101</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Coincidences (corr.)</string>
+    </property>
+   </widget>
+   <widget class="QDoubleSpinBox" name="coincidences_corr">
+    <property name="geometry">
+     <rect>
+      <x>1180</x>
+      <y>700</y>
+      <width>101</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+    <property name="readOnly">
+     <bool>true</bool>
+    </property>
+    <property name="buttonSymbols">
+     <enum>QAbstractSpinBox::NoButtons</enum>
+    </property>
+    <property name="keyboardTracking">
+     <bool>true</bool>
+    </property>
+    <property name="decimals">
+     <number>0</number>
+    </property>
+    <property name="minimum">
+     <double>0.000000000000000</double>
+    </property>
+    <property name="maximum">
+     <double>1000000000.000000000000000</double>
+    </property>
+    <property name="singleStep">
+     <double>1.000000000000000</double>
+    </property>
+    <property name="value">
+     <double>0.000000000000000</double>
     </property>
    </widget>
   </widget>

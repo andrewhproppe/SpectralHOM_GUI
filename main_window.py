@@ -24,6 +24,7 @@ from widgets.HOMGraph import HOMGraph
 from widgets.Integrated_g2_Graph import Integrated_g2_Graph
 from widgets.g2Graph import g2Graph
 from widgets.utils import alphabetical_widget_list
+from PyQt5.QtCore import QTimer
 
 matplotlib.use('Qt5Agg')
 
@@ -37,6 +38,26 @@ class MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__() # Call the inherited classes __init__ method
         uic.loadUi('ui/SpectralHOMGUI.ui', self, package='modules') # Load the .ui file
+
+        # # Set up the QTimer to call update_counter every 200 ms
+        # self.gui_time_elapsed.setReadOnly(True)
+        # self.counter = 0.0  # Counter starts at 0.0 seconds
+        # self.timer = QTimer(self)
+        # self.timer.timeout.connect(self.update_counter)
+        # self.timer.start(200)  # 200 ms interval
+
+        # update_timer = QTimer()
+        # update_timer.setSingleShot(False)
+        # update_timer.timeout.connect(self.gui.repaint)
+        # update_timer.setInterval(500)
+        # update_timer.start()
+
+        self.gui_counter = 0.0  # Counter starts at 0.0 seconds
+        self.plots_refresh_timer = QTimer()
+        self.plots_refresh_timer.setSingleShot(False)
+        self.plots_refresh_timer.timeout.connect(self.plots_refresh)
+        self.plots_refresh_timer.setInterval(499) #prime number
+        self.plots_refresh_timer.start()
 
         """ File utility etc. """ # FFFFF
         self.selectRootPath_btn.clicked.connect(self.get_root_path)
@@ -71,7 +92,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.velo_val.valueChanged.connect(self.set_velocity_params)
         self.accel_val.valueChanged.connect(self.set_velocity_params)
 
-        # self.QuitButton.clicked.connect(QtCore.QCoreApplication.instance().quit)
+        #         # self.QuitButton.clicked.connect(QtCore.QCoreApplication.instance().quit)
         self.QuitButton.clicked.connect(self.quit)
         self.moveTo_btn.clicked.connect(self.move_to)
         self.moveTo_t0_btn.clicked.connect(self.move_to_t0)
@@ -231,6 +252,19 @@ class MainWindow(QtWidgets.QMainWindow):
         self.loadDefaults_btn.clicked.connect(self.load_default_variables)
         self.load_default_variables()
 
+    def plots_refresh(self):
+        self.gui_counter += 0.5
+        # Update the QLineEdit with the current counter value
+        self.gui_time_elapsed.setText(f"{self.gui_counter:.1f}")
+        # pass
+    # do stuff
+
+    # def update_counter(self):
+    #     # Increment the counter by 0.2 seconds
+    #     self.counter += 0.2
+    #     # Update the QLineEdit with the current counter value
+    #     self.gui_time_elapsed.setText(f"{self.counter:.1f}")
+
     """ File utility functions """ #fFFFFF
     def load_default_variables(self):
         with open('config/SpectralHOMGUI_config', 'rb') as f:
@@ -280,6 +314,7 @@ class MainWindow(QtWidgets.QMainWindow):
         # print('testing')
         # print(self.get_filepath())
         config.set('text', 'new value')
+
 
     def quit(self):
         try:
@@ -821,12 +856,20 @@ class MainWindow(QtWidgets.QMainWindow):
             time.sleep(pause_t)
 
             # Pause to acquire
-            time.sleep(acqt)
+            tic = time.time()
+            data_arr = []
+            while time.time() - tic < acqt:
+                data_arr.append(self.coincidences.value())
+                time.sleep(float(self.counter_acquisition_t.text()))
 
-            # Get data from g2
-            # DDDDD
-            data = self.coincidences.value()
-            # data = np.sum(self.g2[0].getData()) / acqt # coincidences per second
+            data = np.mean(np.array(data_arr))
+
+            # time.sleep(acqt)
+            #
+            # # Get data from g2
+            # # DDDDD
+            # data = self.coincidences.value()
+            # # data = np.sum(self.g2[0].getData()) / acqt # coincidences per second
 
             if self.subtract_accidentals.isChecked():
                 data = data - self.accidentals.value()

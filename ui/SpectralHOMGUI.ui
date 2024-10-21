@@ -836,7 +836,7 @@
      <enum>QTabWidget::Triangular</enum>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>2</number>
     </property>
     <property name="tabsClosable">
      <bool>false</bool>
@@ -3489,8 +3489,8 @@
        <rect>
         <x>10</x>
         <y>230</y>
-        <width>141</width>
-        <height>61</height>
+        <width>191</width>
+        <height>31</height>
        </rect>
       </property>
       <property name="placeholderText">
@@ -3517,9 +3517,9 @@
       <property name="geometry">
        <rect>
         <x>30</x>
-        <y>290</y>
-        <width>121</width>
-        <height>21</height>
+        <y>260</y>
+        <width>171</width>
+        <height>51</height>
        </rect>
       </property>
       <property name="font">
@@ -3535,7 +3535,7 @@
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>290</y>
+        <y>260</y>
         <width>21</width>
         <height>22</height>
        </rect>
@@ -5705,7 +5705,7 @@
      <bool>true</bool>
     </property>
     <property name="decimals">
-     <number>1</number>
+     <number>2</number>
     </property>
     <property name="minimum">
      <double>0.000000000000000</double>
@@ -6049,6 +6049,19 @@
     </property>
     <property name="value">
      <double>0.000000000000000</double>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="gui_time_elapsed">
+    <property name="geometry">
+     <rect>
+      <x>50</x>
+      <y>700</y>
+      <width>51</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>0.1</string>
     </property>
    </widget>
   </widget>

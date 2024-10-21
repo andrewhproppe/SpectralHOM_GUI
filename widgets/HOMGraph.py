@@ -21,9 +21,9 @@ class HOMGraph(PlotCanvas):
         for artist in self.fig.gca().lines + self.fig.gca().collections:
             artist.remove()
 
-        self.axes.plot(positions, data, color=self.colors[0])
+        self.axes.errorbar(positions, data, yerr=np.sqrt(data), color=self.colors[0])
         self.axes.autoscale(axis='y')
-        # self.axes.set_ylim(np.min(data) * 0.99, np.max(data) * 1.01)
+        self.axes.set_ylim(np.min(data) * 0.99, np.max(data) * 1.01)
         step = np.diff(positions)[0]
         self.axes.set_xlim(np.min(positions) - step, np.max(positions) + step)
         # self.axes.set_xlim(np.min(positions), np.max(positions))
